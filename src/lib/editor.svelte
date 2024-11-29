@@ -147,7 +147,7 @@
         }
     ];
 
-    import { TextCursor, Brackets, Binary, FileDown } from 'lucide-svelte';
+    import { TextCursor, Brackets, Binary, FileDown, ExternalLink } from 'lucide-svelte';
 
     let argIcon = {
         "text": TextCursor,
@@ -156,15 +156,70 @@
     };
 
     let commands = $state([
-        { command: "FROM", args: ["ubuntu", ":", "latest"], currentlyEditing: true },
+        { command: "FROM", args: ["ubuntu", "latest"], currentlyEditing: true },
         { command: "RUN", args: ["apt-get update"] },
         { command: "RUN", args: ["apt-get install -y nginx"] }
     ]);
 
     let addingCommand = $state(false);
     let lastCurrentlyEditing = 0;
+    let currentlyEditing = $state(0);
+    let newCommandButton = $state();
+    let ignoreLastCMD = false;
 
     let editorText = $state("Editor");
+
+    function findCommandByName(name) {
+        return available.find(availableCommand => availableCommand.command === name);
+    }
+
+    function findArgByName(name, component) {
+        return component.args.find(arg => arg.name === name);
+    }
+
+    function addCommand(command, args = available.find(availableCommand => availableCommand.command === command).args.map(arg => arg.example)) {
+        console.log(command, args);
+
+        if (available.find(availableCommand => availableCommand.command === command).onlyOnce) {
+            commands.forEach(command => {
+                if (command.command === command) {
+                    alert(`The ${command} command can only be used once.`);
+                    return;
+                }
+            });
+        }
+
+        commands.push({ command, args, currentlyEditing: false });
+
+        if (addingCommand) {
+            ignoreLastCMD = true;
+            newCommandButton.click();
+        }
+
+        setCurrentEditing(commands.length - 1);
+    }
+
+    function removeCommand(index) {
+        commands.splice(index, 1);
+        setCurrentEditing(commands.length - 1);
+    }
+
+    function updateCommand(index, command, args) {
+        commands[index] = { command, args, currentlyEditing: false };
+
+        setCurrentEditing(index);
+    }
+
+    function setCurrentEditing(index) {
+        commands.forEach(command => {
+            if (command.currentlyEditing) {
+                command.currentlyEditing = false;
+            }
+        });
+
+        commands[index].currentlyEditing = true;
+        currentlyEditing = index;
+    }
 </script>
 
 <div class="wrapper w-full p-10 rounded-lg border-2 border-primary flex gap-5">
@@ -172,18 +227,31 @@
         <p class="text-xl pb-2">Commands</p>
         
         {#each commands as { command, args, currentlyEditing }, i}
-            <Command {command} {args} {currentlyEditing} />
+            <Command {command} {args} {currentlyEditing} deleteFunction={() => removeCommand(i)} argBuilder={() => {
+                return available.find(availableCommand => availableCommand.command === command).argBuilder(args);
+            }}
+    
+            setCurrentEditing={() => setCurrentEditing(i)}
+            />
         {/each}
 
         <div class="separator-line bg-primary flex rounded pt-1 mx-5 my-3"></div>
 
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="newCommand flex p-2 my-2 rounded bg-[#0f1013] cursor-pointer select-none hover:bg-text hover:text-background transition-all justify-center"  onclick={() => {
-            if (commands[commands.length - 1].command === "CMD") {
-                alert("The CMD command is the last command in a Dockerfile. You can't add more commands after it.");
-                return;
+        <div class="newCommand flex p-2 my-2 rounded bg-[#0f1013] cursor-pointer select-none hover:bg-text hover:text-background transition-all justify-center" bind:this={newCommandButton} onclick={() => {
+            try {
+                if (commands[commands.length - 1].command === "CMD") {
+                    if (!ignoreLastCMD) {
+                        alert("The CMD command is the last command in a Dockerfile. You can't add more commands after it.");
+                        ignoreLastCMD = false;
+                        return; 
+                    }
+                }
+            } catch {
+                console.log("> No commands, ignoring CMD check");
             }
+            
 
             if (!addingCommand) {
                 commands.forEach(command => {
@@ -197,7 +265,12 @@
             }
 
             if (addingCommand) {
-                commands[lastCurrentlyEditing].currentlyEditing = true;
+                try {
+                    commands[lastCurrentlyEditing].currentlyEditing = true;
+                } catch {
+                    console.log("> No commands, ignoring lastCurrentlyEditing");
+                }
+                
                 editorText = "Editor";
             }
 
@@ -212,9 +285,8 @@
             let commandString = "# Generated with Dokr\n\n";
             
             commandString += commands.map(({ command, args }) => {
-                return `${command} ${args.join("")}`;
+                return `${command} ${available.find(availableCommand => availableCommand.command === command).argBuilder(args)}`;
             }).join("\n");
-
 
             let blob = new Blob([commandString], { type: "application/octet-stream" });
             let url = URL.createObjectURL(blob);
@@ -235,7 +307,11 @@
         {#if addingCommand}
             <div class="flex flex-col gap-2 flex-grow overflow-y-auto max-h-96 p-2 rounded-lg border-2 border-primary">
                 {#each available as command}
-                    <div class="availableCommand w-full rounded p-4 bg-[#0f1013] flex gap-5 cursor-pointer">
+                    <!-- svelte-ignore a11y_click_events_have_key_events -->
+                    <!-- svelte-ignore a11y_no_static_element_interactions -->
+                    <div class="availableCommand w-full rounded p-4 bg-[#0f1013] flex gap-5 cursor-pointer" onclick={() => {
+                        addCommand(command.command);
+                    }}>
                         <div class="squareCommand w-24 h-24 flex justify-center items-center rounded bg-background hover:bg-[#31343d] select-none">
                             {command.command}
                         </div>
@@ -256,6 +332,34 @@
                     </div>
                 {/each}
             </div>
-        {:else}{/if}
+        {:else}
+            <div class="flex flex-col gap-2 flex-grow overflow-y-auto max-h-96 p-2 rounded-lg border-2 border-primary">
+                {#if commands.length > 0}
+                    <p class="flex items-center">Command: <span class="text-[#7e22ce] cursor-pointer hover:bg-text hover:bg-opacity-80 hover:text-background p-1 mr-1 rounded command_section command_command">{commands[currentlyEditing].command}</span></p>
+                    <p class="text-sm mb-4">
+                        {findCommandByName(commands[currentlyEditing].command).description}
+                    </p>
+
+                    <div class="flex flex-col gap-2">
+                        {#each commands[currentlyEditing].args as arg, i}
+                            <div class="flex items-center gap-2">
+                                <p class="text-[#0284c7] cursor-pointer hover:bg-text hover:bg-opacity-80 hover:text-background p-1 rounded command_section command_argument">{findCommandByName(commands[currentlyEditing].command).args[i].name[0].toUpperCase() + findCommandByName(commands[currentlyEditing].command).args[i].name.slice(1)}</p>
+                                <input type="text" class="rounded p-1 bg-[#0f1013] text-[#7e22ce] border-2 border-primary w-full" value={arg} oninput={(e) => {
+                                    let newArgs = commands[currentlyEditing].args;
+                                    newArgs[i] = e.target.value;
+                                    updateCommand(currentlyEditing, commands[currentlyEditing].command, newArgs);
+                                }}/>
+                            </div>
+                        {/each}
+
+                        {#if commands[currentlyEditing].command === "FROM"}
+                            <div class="dockerHubLink mt-1 flex gap-2">
+                                Need a base image? <a href="https://hub.docker.com/" target="_blank" class="text-[#14b8a6] hover:text-[#059669] flex gap-1 items-center"><ExternalLink class="w-4 h-4" /> Check Docker Hub</a>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
+            </div>
+        {/if}
     </div>
 </div>
