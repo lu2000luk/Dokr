@@ -1,6 +1,151 @@
 <script>
+    // @ts-nocheck
     import { browser } from "$app/environment";
     import Command from "./command.svelte";
+
+    let available = [
+        {
+            command: "FROM",
+            args: [
+                { name: "image", type: "text", example: "ubuntu" },
+                { name: "tag", type: "text", example: "latest" }
+            ],
+            argBuilder: (args) => {
+                return args.join(":");
+            },
+            description: "Sets the base image for the Dockerfile",
+            example: "FROM ubuntu:latest",
+            onlyOnce: true
+        },
+        {
+            command: "RUN",
+            args: [{ name: "command", type: "text", example: "apt-get update" }],
+            argBuilder: (args) => args.join(""),
+            description: "Executes a command in the build process",
+            example: "RUN apt-get update"
+        },
+        {
+            command: "CMD",
+            args: [{ name: "command", type: "text", example: "nginx -g 'daemon off;'" }],
+            argBuilder: (args) => args.join(""),
+            description: "The default command to run when the container starts",
+            example: "CMD nginx -g 'daemon off;'",
+            onlyOnce: true
+        },
+        {
+            command: "EXPOSE",
+            args: [{ name: "port", type: "number", example: "80" }],
+            argBuilder: (args) => args.join(""),
+            description: "Exposes a port from the container to the host",
+            example: "EXPOSE 80"
+        },
+        {
+            command: "ENV",
+            args: [
+                { name: "key", type: "text", example: "PATH" },
+                { name: "value", type: "text", example: "/usr/local/bin" }
+            ],
+            argBuilder: (args) => args.join("="),
+            description: "Sets environment variables",
+            example: "ENV PATH=/usr/local/bin"
+        },
+        {
+            command: "COPY",
+            args: [
+                { name: "src", type: "text", example: "." },
+                { name: "dest", type: "text", example: "/app" }
+            ],
+            argBuilder: (args) => args.join(" "),
+            description: "Copies files from source to destination",
+            example: "COPY . /app"
+        },
+        {
+            command: "WORKDIR",
+            args: [{ name: "path", type: "text", example: "/app" }],
+            argBuilder: (args) => args.join(""),
+            description: "Sets working directory for subsequent commands",
+            example: "WORKDIR /app"
+        },
+        {
+            command: "VOLUME",
+            args: [{ name: "path", type: "text", example: "/var/log" }],
+            argBuilder: (args) => args.join(""),
+            description: "Creates a mount point with the specified name",
+            example: "VOLUME /var/log"
+        },
+        {
+            command: "USER",
+            args: [{ name: "user", type: "text", example: "root" }],
+            argBuilder: (args) => args.join(""),
+            description: "Sets the user for the subsequent commands",
+            example: "USER root"
+        },
+        {
+            command: "LABEL",
+            args: [
+                { name: "key", type: "text", example: "version" },
+                { name: "value", type: "text", example: "1.0" }
+            ],
+            argBuilder: (args) => args.join("="),
+            description: "Adds metadata to an image",
+            example: "LABEL version=1.0"
+        },
+        {
+            command: "ARG",
+            args: [
+                { name: "name", type: "text", example: "BUILD_VERSION" },
+                { name: "default", type: "text", example: "latest" }
+            ],
+            argBuilder: (args) => args.join("="),
+            description: "Defines a variable to pass to the build process",
+            example: "ARG BUILD_VERSION=latest"
+        },
+        {
+            command: "ONBUILD",
+            args: [{ name: "instruction", type: "text", example: "ADD . /app" }],
+            argBuilder: (args) => args.join(""),
+            description: "Adds a trigger instruction",
+            example: "ONBUILD ADD . /app"
+        },
+        {
+            command: "STOPSIGNAL",
+            args: [{ name: "signal", type: "text", example: "SIGTERM" }],
+            argBuilder: (args) => args.join(""),
+            description: "Sets the system call signal that will stop the container",
+            example: "STOPSIGNAL SIGTERM"
+        },
+        {
+            command: "HEALTHCHECK",
+            args: [{ name: "command", type: "text", example: "curl localhost" }],
+            argBuilder: (args) => args.join(""),
+            description: "Sets a command to run to check the container's health",
+            example: "HEALTHCHECK curl localhost"
+        },
+        {
+            command: "SHELL",
+            args: [{ name: "shell", type: "text", example: "/bin/bash" }],
+            argBuilder: (args) => args.join(""),
+            description: "Sets the default shell for the container",
+            example: "SHELL /bin/bash"
+        },
+        {
+            command: "MAINTAINER",
+            args: [{ name: "name", type: "text", example: "John Doe" }],
+            argBuilder: (args) => args.join(""),
+            description: "Sets the author of the image",
+            example: "MAINTAINER John Doe"
+        },
+        {
+            command: "ADD",
+            args: [
+                { name: "src", type: "text", example: "." },
+                { name: "dest", type: "text", example: "/app" }
+            ],
+            argBuilder: (args) => args.join(" "),
+            description: "Copies files from source to destination",
+            example: "ADD . /app"
+        }
+    ]
 
     let commands = $state([
         { command: "FROM", args: ["ubuntu", ":", "latest"], currentlyEditing: true },
