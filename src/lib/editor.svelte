@@ -145,7 +145,15 @@
             description: "Copies files from source to destination",
             example: "ADD . /app"
         }
-    ]
+    ];
+
+    import { TextCursor, Brackets, Binary } from 'lucide-svelte';
+
+    let argIcon = {
+        "text": TextCursor,
+        "array": Brackets,
+        "number": Binary
+    };
 
     let commands = $state([
         { command: "FROM", args: ["ubuntu", ":", "latest"], currentlyEditing: true },
@@ -155,6 +163,8 @@
 
     let addingCommand = $state(false);
     let lastCurrentlyEditing = 0;
+
+    let editorText = $state("Editor");
 </script>
 
 <div class="wrapper w-full p-10 rounded-lg border-2 border-primary flex gap-5">
@@ -181,11 +191,14 @@
                         lastCurrentlyEditing = commands.indexOf(command);
                         command.currentlyEditing = false;
                     }
+
+                    editorText = "Adding command";
                 });
             }
 
             if (addingCommand) {
                 commands[lastCurrentlyEditing].currentlyEditing = true;
+                editorText = "Editor";
             }
 
             addingCommand = !addingCommand;
@@ -217,7 +230,32 @@
             <span class="p-1">░ Export Dockerfile</span>
         </div>
     </div>
-    <div class="editor">
-        <p class="text-xl pb-2">Editor</p>
+    <div class="editor flex flex-col flex-grow">
+        <p class="text-xl pb-2">{editorText}</p>
+        {#if addingCommand}
+            <div class="flex flex-col gap-2 flex-grow overflow-y-auto max-h-96 p-2 rounded-lg border-2 border-primary">
+                {#each available as command}
+                    <div class="availableCommand w-full rounded p-4 bg-[#0f1013] flex gap-5 cursor-pointer">
+                        <div class="squareCommand w-24 h-24 flex justify-center items-center rounded bg-background hover:bg-[#31343d] select-none">
+                            {command.command}
+                        </div>
+
+                        <div class="commandMeta flex flex-col">
+                            <p class="text-lg">{command.description}</p>
+                            <div class="flex gap-1 items-center text-sm">Example: <p class="text-[#14b8a6] py-1 px-2 bg-background rounded">{command.example}</p></div>
+                            <div class="argsTags flex gap-2 mt-2">
+                                {#each command.args as arg}
+                                    <div class="argTag flex text-text rounded-full py-1 px-2 bg-[#31343d] items-center text-sm gap-1" title="{arg.name[0].toUpperCase() + arg.name.slice(1)} argument">
+                                        <!-- svelte-ignore svelte_component_deprecated -->
+                                        <svelte:component this={argIcon[arg.type]} class="w-4 h-4"/>
+                                        <p>{arg.name[0].toUpperCase() + arg.name.slice(1)}</p>
+                                    </div>
+                                {/each}
+                            </div>
+                        </div>
+                    </div>
+                {/each}
+            </div>
+        {:else}{/if}
     </div>
 </div>
