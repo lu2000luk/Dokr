@@ -147,7 +147,7 @@
         }
     ];
 
-    import { TextCursor, Brackets, Binary } from 'lucide-svelte';
+    import { TextCursor, Brackets, Binary, FileDown } from 'lucide-svelte';
 
     let argIcon = {
         "text": TextCursor,
@@ -175,7 +175,7 @@
             <Command {command} {args} {currentlyEditing} />
         {/each}
 
-        <div class="separator-line bg-[#0f1013] flex rounded pt-1 mx-5 my-3"></div>
+        <div class="separator-line bg-primary flex rounded pt-1 mx-5 my-3"></div>
 
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -227,7 +227,7 @@
             console.log(commandString);
             console.log(commands);
         }}>
-            <span class="p-1">░ Export Dockerfile</span>
+            <span class="p-1 flex gap-2"><FileDown /> Export Dockerfile</span>
         </div>
     </div>
     <div class="editor flex flex-col flex-grow">
