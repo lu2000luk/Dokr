@@ -288,6 +288,15 @@
                 return `${command} ${available.find(availableCommand => availableCommand.command === command).argBuilder(args)}`;
             }).join("\n");
 
+            if (!commandString.includes("FROM")) {
+                alert("You need to have a base image (FROM command) in your Dockerfile, we'll add ubuntu:latest for you.");
+                commandString = `# Generated with Dokr\n\nFROM ubuntu:latest\n${commandString.replace("# Generated with Dokr\n\n", "")}`;
+            }
+
+            if (!commandString.includes("CMD") || !commandString.includes("ENTRYPOINT")) {
+                alert("Missing CMD or ENTRYPOINT command. We will still give you the Dockerfile, but it probably won't work.");
+            }
+
             let blob = new Blob([commandString], { type: "application/octet-stream" });
             let url = URL.createObjectURL(blob);
             let a = document.createElement("a");
