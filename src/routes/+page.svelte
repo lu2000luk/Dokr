@@ -26,4 +26,8 @@
     <Editor />
 
     <div class="separator mt-8"></div>
+
+    <p>
+        Made with ❤️ by <a href="https://lu2000luk.com/?ref=dokr" target="_blank" class="px-2 mx-1 hover:px-3 hover:mx-0 transition-all duration-200 py-1 rounded bg-[#0f1013] text-[#059669] font-semibold shadow-md cursor-pointer">lu2000luk</a>
+    </p>
 </main>

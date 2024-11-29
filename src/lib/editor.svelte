@@ -147,7 +147,7 @@
         }
     ];
 
-    import { TextCursor, Brackets, Binary, FileDown, ExternalLink } from 'lucide-svelte';
+    import { TextCursor, Brackets, Binary, FileDown, ExternalLink, TriangleAlert } from 'lucide-svelte';
 
     let argIcon = {
         "text": TextCursor,
@@ -369,7 +369,7 @@
 
                         {#if commands[currentlyEditing].command === "RUN"}
                             <div class="tip">
-                                <p class="text-[#14b8a6]">Warning:</p>
+                                <p class="text-[#14b8a6] flex gap-1 items-center"><TriangleAlert class="scale-75" /> Warning:</p>
                                 <p class="text-sm">These commands will be runned <span class="text-[#14b8a6]">when you build the container</span></p>
                             </div>
                         {/if}
