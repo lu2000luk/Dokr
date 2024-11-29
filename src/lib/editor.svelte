@@ -357,6 +357,20 @@
                                 Need a base image? <a href="https://hub.docker.com/" target="_blank" class="text-[#14b8a6] hover:text-[#059669] flex gap-1 items-center"><ExternalLink class="w-4 h-4" /> Check Docker Hub</a>
                             </div>
                         {/if}
+
+                        {#if commands[currentlyEditing].command === "RUN"}
+                            <div class="tip">
+                                <p class="text-[#14b8a6]">Warning:</p>
+                                <p class="text-sm">These commands will be runned <span class="text-[#14b8a6]">when you build the container</span></p>
+                            </div>
+                        {/if}
+
+                        {#if commands[currentlyEditing].command === "EXPOSE"}
+                            <div class="tip">
+                                <p class="text-[#14b8a6]">Tip:</p>
+                                <p class="text-sm">Port 80 is the default port for websites</p>
+                            </div>
+                        {/if}   
                     </div>
                 {/if}
             </div>
